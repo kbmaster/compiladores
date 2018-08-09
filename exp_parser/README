@@ -1,0 +1,17 @@
+json parser 1.0
+
+Requiere jflex,cup
+
+-Asegurese de que jflex esta en el CLASSPATH.
+-Edite el Makefile y asegurese de que la varible CUPJAR apunta correctamente a la ubicacion de cup.
+
+-Utilizando el comando "make" se corre el testcase incluido en el paquete; el parser objtiene la entrada del 
+archivo test.txt, genera la salida out.txt y compara el resultado con el contenido de archivo out.ok.
+
+-El parser puede correr en modo interactivo utilizando el comando "make interactive".
+-Cada lines de testo representa una operacion diferente para el parser.
+
+-Utilice el comando "make clean" para limpiar contenido generado del directorio.
+
+
+
