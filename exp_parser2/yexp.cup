@@ -1,0 +1,122 @@
+import java_cup.runtime.*;
+import java.util.*;
+   
+parser code {:
+    
+    	public void report_error(String message, Object info) 
+	{
+   
+                StringBuilder m = new StringBuilder("Error");
+    
+	        if (info instanceof java_cup.runtime.Symbol) 
+		{
+                        java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
+   
+                        if (s.left >= 0) {                
+                                m.append(" in line "+(s.left+1));   
+                
+		        if (s.right >= 0)                    
+                                m.append(", column "+(s.right+1));
+            	}
+        }
+   
+        m.append(" : "+message);
+        System.err.println(m);
+    }
+   
+     public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        System.exit(1);
+    }
+:};
+   
+
+/////////////////////////////////////////////////////////////////////////////
+
+terminal LPARENT,RPARENT,MULT,COS,DIV,MOD,PLUS,MIN,UMIN,EQUAL,NOT_EQUAL,LESS,GREATER,LESS_EQUAL,GREATER_EQUAL,NOT,AND,OR,LBRACK,RBRACK,COMMA,EOL;
+terminal Boolean   BOOLEAN;
+terminal Double    NUMBER;
+
+non terminal Double  Num2NumOp;
+non terminal Boolean Bool2BoolOp;
+non terminal Boolean Num2BoolOp,Obj2BoolOp;
+non terminal Object  S,E,Exp;
+non terminal List Exp_list,Exps;
+
+precedence left PLUS, MIN;
+precedence left MULT, DIV, COS, MOD;
+precedence left NOT,AND,OR;
+precedence left UMIN;
+
+//una operacion por linea
+S  ::= S Exp | Exp;
+Exp ::= E:op {:System.out.println(" = " + op);:} EOL | Exp_list:opl {:System.out.println(" = " + opl);:} EOL; 
+
+//expresiones
+E  ::=  Num2NumOp:op  {: RESULT= op; :}  |
+	Bool2BoolOp:op{: RESULT= op; :}  |
+	Num2BoolOp:op {: RESULT= op; :};
+
+//listas de expresiones
+Exp_list ::= LBRACK RBRACK {: RESULT=new ArrayList(); :} | LBRACK Exps:e RBRACK {:RESULT=e;:};
+Exps ::= E:e {: RESULT=new ArrayList(); RESULT.add(e); :} | Exps:es COMMA E:e {:es.add(e); RESULT=es;:};
+
+
+/////////////////////////////////////////////////////////////////////////
+
+Num2NumOp ::= 	Num2NumOp:n1 PLUS Num2NumOp:n2  {:RESULT= n1 + n2;:} | 
+		Num2NumOp:n1 MIN  Num2NumOp:n2  {:RESULT= n1 - n2;:} |
+		Num2NumOp:n1 MULT Num2NumOp:n2  {:RESULT= n1 * n2;:} |
+		Num2NumOp:n1 DIV  Num2NumOp:n2  {:RESULT= (double)(int) (n1 / n2);:} |
+		Num2NumOp:n1 COS  Num2NumOp:n2  {:RESULT= n1 / n2 ;:} |
+		Num2NumOp:n1 MOD  Num2NumOp:n2  {:RESULT= n1 % n2;:} |
+		MIN Num2NumOp:n {:RESULT = new Double(0 - n);:} %prec UMIN; 
+
+Num2NumOp ::= 	LPARENT Num2NumOp:n RPARENT 	{:RESULT=n; :};
+Num2NumOp ::= 	NUMBER:n 		    	{:RESULT= new Double(n);:};			
+
+
+
+///////////////////////////////////////////////////////////////////////////
+
+
+Num2BoolOp ::=  Num2NumOp:n1 EQUAL 	   Num2NumOp:n2 {:RESULT= n1.compareTo(n2)==0;:}|
+		Num2NumOp:n1 NOT_EQUAL 	   Num2NumOp:n2 {:RESULT= n1.compareTo(n2)!=0;:}|
+		Num2NumOp:n1 LESS 	   Num2NumOp:n2 {:RESULT= n1<n2;:}|
+		Num2NumOp:n1 GREATER 	   Num2NumOp:n2 {:RESULT= n1>n2;:}|
+		Num2NumOp:n1 LESS_EQUAL    Num2NumOp:n2 {:RESULT= n1<=n2;:}|
+		Num2NumOp:n1 GREATER_EQUAL Num2NumOp:n2 {:RESULT= n1>=n2;:};
+
+Num2BoolOp ::=  LPARENT Num2BoolOp:b RPARENT {:RESULT=b;:};
+
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+Bool2BoolOp ::= NOT Bool2BoolOp:b {:RESULT=!b;:}|
+		NOT Num2BoolOp:b  {:RESULT=!b;:}|
+                
+		Bool2BoolOp:b1 AND Bool2BoolOp:b2 {:RESULT= b1 && b2;:}|
+		Num2BoolOp:b1  AND Bool2BoolOp:b2 {:RESULT= b1 && b2;:}|
+		Bool2BoolOp:b1 AND Num2BoolOp:b2  {:RESULT= b1 && b2;:}|
+		Num2BoolOp:b1  AND Num2BoolOp:b2  {:RESULT= b1 && b2;:}|
+		
+                Bool2BoolOp:b1 OR Bool2BoolOp:b2 {:RESULT= b1 || b2;:}|
+		Num2BoolOp:b1  OR Bool2BoolOp:b2 {:RESULT= b1 || b2;:}|
+		Bool2BoolOp:b1 OR Num2BoolOp:b2  {:RESULT= b1 || b2;:}|
+		Num2BoolOp:b1  OR Num2BoolOp:b2  {:RESULT= b1 || b2;:};
+
+Bool2BoolOp ::=  LPARENT Bool2BoolOp:b RPARENT {:RESULT=b;:};
+Bool2BoolOp ::= BOOLEAN:b {:RESULT= new Boolean(b);:};
+
+
+
+
+
+
+
+
+
+
+

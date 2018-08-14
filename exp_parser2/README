@@ -1,0 +1,16 @@
+expresion parser 2.0
+
+Requiere jflex,cup
+
+-Asegurese de que jflex esta en el CLASSPATH.
+-Edite el Makefile y asegurese de que la varible CUPJAR apunta correctamente a la ubicacion de cup.
+
+-El parser puede correr en modo interactivo utilizando el comando "make interactive".
+-Cada lines de testo representa una operacion diferente para el parser.
+-Cada linea puede ser una expresion aritmetica o una lista de expresiones ente []
+
+-Utilice el comando "make clean" para limpiar contenido generado del directorio.
+
+
+
+
