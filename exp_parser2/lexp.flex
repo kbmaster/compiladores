@@ -54,6 +54,8 @@ Boolean = true | false
 	"["	{ System.out.print("["); return symbol(sym.LBRACK); }
 	"]"	{ System.out.print("]"); return symbol(sym.RBRACK); }
 	","	{ System.out.print(","); return symbol(sym.COMMA); }	
+	"#"	{ System.out.print(","); return symbol(sym.HASHTAG); }
+	"<-"	{ System.out.print(","); return symbol(sym.OWN);}
 		
         {Number}     { System.out.print(yytext());  return symbol(sym.NUMBER, new Double(yytext()));}
 	{Hex}	     { System.out.print(yytext());  return symbol(sym.NUMBER, new Double(Integer.decode(yytext())));}	

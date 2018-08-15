@@ -1,3 +1,4 @@
+
 import java_cup.runtime.*;
 import java.util.*;
    
@@ -33,15 +34,13 @@ parser code {:
 
 /////////////////////////////////////////////////////////////////////////////
 
-terminal LPARENT,RPARENT,MULT,COS,DIV,MOD,PLUS,MIN,UMIN,EQUAL,NOT_EQUAL,LESS,GREATER,LESS_EQUAL,GREATER_EQUAL,NOT,AND,OR,LBRACK,RBRACK,COMMA,EOL;
-terminal Boolean   BOOLEAN;
-terminal Double    NUMBER;
+terminal LPARENT,RPARENT,MULT,COS,DIV,MOD,PLUS,MIN,UMIN,EQUAL,NOT_EQUAL,LESS,GREATER,LESS_EQUAL,GREATER_EQUAL,NOT,AND,OR,LBRACK,RBRACK,COMMA,HASHTAG,OWN,EOL;
+terminal Boolean  BOOLEAN;
+terminal Double   NUMBER;
 
-non terminal Double  Num2NumOp;
-non terminal Boolean Bool2BoolOp;
-non terminal Boolean Num2BoolOp,Obj2BoolOp;
-non terminal Object  S,E,Exp;
-non terminal List Exp_list,Exps;
+non terminal AST  Num2NumOp,Bool2BoolOp,Num2BoolOp;
+non terminal AST  S,E;
+non terminal List Exp_list,Exps,Exp;
 
 precedence left PLUS, MIN;
 precedence left MULT, DIV, COS, MOD;
@@ -50,7 +49,104 @@ precedence left UMIN;
 
 //una operacion por linea
 S  ::= S Exp | Exp;
-Exp ::= E:op {:System.out.println(" = " + op);:} EOL | Exp_list:opl {:System.out.println(" = " + opl);:} EOL; 
+
+
+Exp ::= E:op {:System.out.println(" = " + op.eval());:} EOL |
+	Exp_list:opl 
+	{:
+	
+	System.out.print(" = [");
+	for(int i=0;i<opl.size();i++)
+	{
+		AST op = (AST) opl.get(i);
+		if(i==0)System.out.print(op.eval());
+		else
+		System.out.print("," + op.eval());
+	}
+	
+	System.out.println("]");
+	
+	:} EOL |
+
+	HASHTAG  E:op {:System.out.println(" = " +op.size());:} EOL |
+	HASHTAG  Exp_list:opl 
+	{:
+
+        System.out.print(" = [");
+        for(int i=0;i<opl.size();i++)
+        {
+                AST op = (AST) opl.get(i);
+                if(i==0)System.out.print(op.size());
+                else
+                System.out.print("," + op.size());
+        }
+
+        System.out.println("]");
+
+        :} EOL |
+
+	E:op OWN Exp_list:ops 
+	{:
+		boolean own=false;
+		for(int i=0;i<ops.size();i++)
+		{
+			AST exp = (AST) ops.get(i);
+			own= own || exp.compare(op);
+		}
+
+		System.out.println(" = "+own);
+
+	:}  EOL |
+
+	Exp_list:l1 EQUAL Exp_list:l2 
+	{:
+		boolean eq=false;
+		
+		if(l1.size()==l2.size())
+		{
+			eq=true;
+			for(int i=0;i<l1.size();i++)
+                	{
+                        	AST exp1 = (AST) l1.get(i);
+				AST exp2 = (AST) l2.get(i);
+                        	eq= eq && exp1.compare(exp2);
+                	}
+		}
+	
+		System.out.println(" = "+ eq);
+		
+
+	:} EOL |
+	
+	Exp_list:l1 NOT_EQUAL Exp_list:l2 
+	{:
+		boolean eq=false;
+
+                if(l1.size()==l2.size())
+                {
+                        eq=true;
+                        for(int i=0;i<l1.size();i++)
+                        {
+                                AST exp1 = (AST) l1.get(i);
+                                AST exp2 = (AST) l2.get(i);
+                                eq= eq && exp1.compare(exp2);
+                        }
+                }
+
+                System.out.println(" = "+ !eq);
+
+	:} EOL;
+
+	Exp_list ::= Exp_list:l1 PLUS Exp_list:l2 
+	{:
+		List r=new ArrayList();
+		r.addAll(l1);
+		r.addAll(l2);
+		RESULT=r;
+
+	:}; 
+
+
 
 //expresiones
 E  ::=  Num2NumOp:op  {: RESULT= op; :}  |
@@ -64,51 +160,50 @@ Exps ::= E:e {: RESULT=new ArrayList(); RESULT.add(e); :} | Exps:es COMMA E:e {:
 
 /////////////////////////////////////////////////////////////////////////
 
-Num2NumOp ::= 	Num2NumOp:n1 PLUS Num2NumOp:n2  {:RESULT= n1 + n2;:} | 
-		Num2NumOp:n1 MIN  Num2NumOp:n2  {:RESULT= n1 - n2;:} |
-		Num2NumOp:n1 MULT Num2NumOp:n2  {:RESULT= n1 * n2;:} |
-		Num2NumOp:n1 DIV  Num2NumOp:n2  {:RESULT= (double)(int) (n1 / n2);:} |
-		Num2NumOp:n1 COS  Num2NumOp:n2  {:RESULT= n1 / n2 ;:} |
-		Num2NumOp:n1 MOD  Num2NumOp:n2  {:RESULT= n1 % n2;:} |
-		MIN Num2NumOp:n {:RESULT = new Double(0 - n);:} %prec UMIN; 
+Num2NumOp ::= 	Num2NumOp:n1 PLUS Num2NumOp:n2  {:RESULT= new AST("+"); RESULT.add(n1); RESULT.add(n2);:}  |
+		Num2NumOp:n1 MIN  Num2NumOp:n2  {:RESULT= new AST("-");  RESULT.add(n1); RESULT.add(n2);:} |
+		Num2NumOp:n1 MULT Num2NumOp:n2{:RESULT= new AST("*");  RESULT.add(n1); RESULT.add(n2);:}   |
+		Num2NumOp:n1 COS  Num2NumOp:n2  {:RESULT= new AST("/");  RESULT.add(n1); RESULT.add(n2);:} |
+		Num2NumOp:n1 MOD  Num2NumOp:n2  {:RESULT= new AST("%");  RESULT.add(n1); RESULT.add(n2);:} |
+		MIN Num2NumOp:n {:RESULT= new AST("--");  RESULT.add(n);:} %prec UMIN; 
 
-Num2NumOp ::= 	LPARENT Num2NumOp:n RPARENT 	{:RESULT=n; :};
-Num2NumOp ::= 	NUMBER:n 		    	{:RESULT= new Double(n);:};			
+Num2NumOp ::= 	LPARENT Num2NumOp:n RPARENT 	{:RESULT=new AST("()"); RESULT.add(n);:};
+Num2NumOp ::= 	NUMBER:n 		    	{:RESULT= new AST(n);:};			
 
 
 
 ///////////////////////////////////////////////////////////////////////////
 
 
-Num2BoolOp ::=  Num2NumOp:n1 EQUAL 	   Num2NumOp:n2 {:RESULT= n1.compareTo(n2)==0;:}|
-		Num2NumOp:n1 NOT_EQUAL 	   Num2NumOp:n2 {:RESULT= n1.compareTo(n2)!=0;:}|
-		Num2NumOp:n1 LESS 	   Num2NumOp:n2 {:RESULT= n1<n2;:}|
-		Num2NumOp:n1 GREATER 	   Num2NumOp:n2 {:RESULT= n1>n2;:}|
-		Num2NumOp:n1 LESS_EQUAL    Num2NumOp:n2 {:RESULT= n1<=n2;:}|
-		Num2NumOp:n1 GREATER_EQUAL Num2NumOp:n2 {:RESULT= n1>=n2;:};
+Num2BoolOp ::=  Num2NumOp:n1 EQUAL 	   Num2NumOp:n2 {:RESULT= new AST("=="); RESULT.add(n1); RESULT.add(n2);:}|
+		Num2NumOp:n1 NOT_EQUAL 	   Num2NumOp:n2 {:RESULT= new AST("/="); RESULT.add(n1); RESULT.add(n2);:}|
+		Num2NumOp:n1 LESS 	   Num2NumOp:n2 {:RESULT= new AST("<"); RESULT.add(n1); RESULT.add(n2);:}|
+		Num2NumOp:n1 GREATER 	   Num2NumOp:n2 {:RESULT= new AST(">"); RESULT.add(n1); RESULT.add(n2);:}|
+		Num2NumOp:n1 LESS_EQUAL    Num2NumOp:n2 {:RESULT= new AST("<="); RESULT.add(n1); RESULT.add(n2);:}|
+		Num2NumOp:n1 GREATER_EQUAL Num2NumOp:n2 {:RESULT= new AST(">="); RESULT.add(n1); RESULT.add(n2);:};
 
-Num2BoolOp ::=  LPARENT Num2BoolOp:b RPARENT {:RESULT=b;:};
+Num2BoolOp ::=  LPARENT Num2BoolOp:b RPARENT {:RESULT= new AST("()"); RESULT.add(b);:};
 
 
 
 //////////////////////////////////////////////////////////////////////////
 
 
-Bool2BoolOp ::= NOT Bool2BoolOp:b {:RESULT=!b;:}|
-		NOT Num2BoolOp:b  {:RESULT=!b;:}|
+Bool2BoolOp ::= NOT Bool2BoolOp:b {:RESULT=new AST("!"); RESULT.add(b);:}|
+		NOT Num2BoolOp:b  {:RESULT=new AST("!"); RESULT.add(b);:}|
                 
-		Bool2BoolOp:b1 AND Bool2BoolOp:b2 {:RESULT= b1 && b2;:}|
-		Num2BoolOp:b1  AND Bool2BoolOp:b2 {:RESULT= b1 && b2;:}|
-		Bool2BoolOp:b1 AND Num2BoolOp:b2  {:RESULT= b1 && b2;:}|
-		Num2BoolOp:b1  AND Num2BoolOp:b2  {:RESULT= b1 && b2;:}|
+		Bool2BoolOp:b1 AND Bool2BoolOp:b2 {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  AND Bool2BoolOp:b2 {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
+		Bool2BoolOp:b1 AND Num2BoolOp:b2  {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  AND Num2BoolOp:b2  {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
 		
-                Bool2BoolOp:b1 OR Bool2BoolOp:b2 {:RESULT= b1 || b2;:}|
-		Num2BoolOp:b1  OR Bool2BoolOp:b2 {:RESULT= b1 || b2;:}|
-		Bool2BoolOp:b1 OR Num2BoolOp:b2  {:RESULT= b1 || b2;:}|
-		Num2BoolOp:b1  OR Num2BoolOp:b2  {:RESULT= b1 || b2;:};
+                Bool2BoolOp:b1 OR Bool2BoolOp:b2 {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  OR Bool2BoolOp:b2 {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:}|
+		Bool2BoolOp:b1 OR Num2BoolOp:b2  {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  OR Num2BoolOp:b2  {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:};
 
-Bool2BoolOp ::=  LPARENT Bool2BoolOp:b RPARENT {:RESULT=b;:};
-Bool2BoolOp ::= BOOLEAN:b {:RESULT= new Boolean(b);:};
+Bool2BoolOp ::=  LPARENT Bool2BoolOp:b RPARENT {:RESULT=new AST("()"); RESULT.add(b);:};
+Bool2BoolOp ::= BOOLEAN:b {:RESULT= new AST(b);:};
 
 
 
