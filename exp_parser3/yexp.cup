@@ -179,8 +179,8 @@ Num2BoolOp ::=  Num2NumOp:n1 EQUAL 	   Num2NumOp:n2 {:RESULT= new EqualsNode("==
 		Num2NumOp:n1 NOT_EQUAL 	   Num2NumOp:n2 {:RESULT= new NotEqualsNode("/="); RESULT.add(n1); RESULT.add(n2);:}|
 		Num2NumOp:n1 LESS 	   Num2NumOp:n2 {:RESULT= new LessThanNode("<"); RESULT.add(n1); RESULT.add(n2);:}|
 		Num2NumOp:n1 GREATER 	   Num2NumOp:n2 {:RESULT= new MoreThanNode(">"); RESULT.add(n1); RESULT.add(n2);:}|
-		Num2NumOp:n1 LESS_EQUAL    Num2NumOp:n2 {:RESULT= new AST("<="); RESULT.add(n1); RESULT.add(n2);:}|
-		Num2NumOp:n1 GREATER_EQUAL Num2NumOp:n2 {:RESULT= new AST(">="); RESULT.add(n1); RESULT.add(n2);:};
+		Num2NumOp:n1 LESS_EQUAL    Num2NumOp:n2 {:RESULT= new LessEqualsNode("<="); RESULT.add(n1); RESULT.add(n2);:}|
+		Num2NumOp:n1 GREATER_EQUAL Num2NumOp:n2 {:RESULT= new MoreEqualsNode(">="); RESULT.add(n1); RESULT.add(n2);:};
 
 Num2BoolOp ::=  LPARENT Num2BoolOp:b RPARENT {:RESULT= new AST("()"); RESULT.add(b);:};
 
@@ -189,18 +189,18 @@ Num2BoolOp ::=  LPARENT Num2BoolOp:b RPARENT {:RESULT= new AST("()"); RESULT.add
 //////////////////////////////////////////////////////////////////////////
 
 
-Bool2BoolOp ::= NOT Bool2BoolOp:b {:RESULT=new AST("!"); RESULT.add(b);:}|
-		NOT Num2BoolOp:b  {:RESULT=new AST("!"); RESULT.add(b);:}|
+Bool2BoolOp ::= NOT Bool2BoolOp:b {:RESULT=new NotNode("!"); RESULT.add(b);:}|
+		NOT Num2BoolOp:b  {:RESULT=new NotNode("!"); RESULT.add(b);:}|
                 
-		Bool2BoolOp:b1 AND Bool2BoolOp:b2 {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
-		Num2BoolOp:b1  AND Bool2BoolOp:b2 {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
-		Bool2BoolOp:b1 AND Num2BoolOp:b2  {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
-		Num2BoolOp:b1  AND Num2BoolOp:b2  {:RESULT=new AST("&&"); RESULT.add(b1); RESULT.add(b2);:}|
+		Bool2BoolOp:b1 AND Bool2BoolOp:b2 {:RESULT=new AndNode("&&"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  AND Bool2BoolOp:b2 {:RESULT=new AndNode("&&"); RESULT.add(b1); RESULT.add(b2);:}|
+		Bool2BoolOp:b1 AND Num2BoolOp:b2  {:RESULT=new AndNode("&&"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  AND Num2BoolOp:b2  {:RESULT=new AndNode("&&"); RESULT.add(b1); RESULT.add(b2);:}|
 		
-                Bool2BoolOp:b1 OR Bool2BoolOp:b2 {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:}|
-		Num2BoolOp:b1  OR Bool2BoolOp:b2 {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:}|
-		Bool2BoolOp:b1 OR Num2BoolOp:b2  {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:}|
-		Num2BoolOp:b1  OR Num2BoolOp:b2  {:RESULT=new AST("||"); RESULT.add(b1); RESULT.add(b2);:};
+                Bool2BoolOp:b1 OR Bool2BoolOp:b2 {:RESULT=new OrNode("||"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  OR Bool2BoolOp:b2 {:RESULT=new OrNode("||"); RESULT.add(b1); RESULT.add(b2);:}|
+		Bool2BoolOp:b1 OR Num2BoolOp:b2  {:RESULT=new OrNode("||"); RESULT.add(b1); RESULT.add(b2);:}|
+		Num2BoolOp:b1  OR Num2BoolOp:b2  {:RESULT=new OrNode("||"); RESULT.add(b1); RESULT.add(b2);:};
 
 Bool2BoolOp ::=  LPARENT Bool2BoolOp:b RPARENT {:RESULT=new AST("()"); RESULT.add(b);:};
 Bool2BoolOp ::= BOOLEAN:b {:RESULT= new AST(b);:};
